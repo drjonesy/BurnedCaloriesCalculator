@@ -4,7 +4,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 
 import android.view.KeyEvent;
 import android.view.View;
@@ -15,22 +14,18 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
-import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
 
 public class BurnedCaloriesCalculatorActivity extends AppCompatActivity
-        implements OnEditorActionListener, OnSeekBarChangeListener, OnItemSelectedListener, OnKeyListener {
+        implements OnEditorActionListener, OnSeekBarChangeListener, OnKeyListener {
 
     //define variables for widgets
     private EditText weightEditText;
@@ -86,8 +81,30 @@ public class BurnedCaloriesCalculatorActivity extends AppCompatActivity
         weightEditText.setOnKeyListener(this);
         milesRanSeekBar.setOnSeekBarChangeListener(this);
         milesRanSeekBar.setOnKeyListener(this);
-        feetSpinner.setOnItemSelectedListener(this);
-        inchesSpinner.setOnItemSelectedListener(this);
+        feetSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
+                feet_spin = position;
+                calculateAndDisplay();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+        inchesSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
+                inches_spin = position;
+                calculateAndDisplay();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                // do nothing
+            }
+        });
 
         //get SharedPreferences object
         savedValues = getSharedPreferences("SaveValues", MODE_PRIVATE);
@@ -138,9 +155,11 @@ public class BurnedCaloriesCalculatorActivity extends AppCompatActivity
         Editor editor = savedValues.edit();
         editor.putString("weightString",weightString);
         editor.putInt("milesRan",milesRan);
-//        editor.putInt("feet_spin",feet_spin);
-//        editor.putInt("inches_spin",inches_spin);
-        editor.commit();
+        editor.putInt("feet_spin",feet_spin);
+        editor.putInt("inches_spin",inches_spin);
+        editor.putString("nameString", nameString);
+
+        editor.apply();
 
         super.onPause();
     }
@@ -149,12 +168,18 @@ public class BurnedCaloriesCalculatorActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
+        //get value from spinners
+
         //get the instance variables
         weightString = savedValues.getString("weightString","");
+        nameString = savedValues.getString("nameString","");
         milesRan = savedValues.getInt("milesRan",1);
+        feet_spin = savedValues.getInt("feet_spin",1);
+        inches_spin = savedValues.getInt("inches_spin",1);
 
         //set weight amount
         weightEditText.setText(weightString);
+        nameEditText.setText(nameString);
 
 //        //set miles ran
 //        milesRanSeekBar.setProgress(milesRan);
@@ -183,13 +208,13 @@ public class BurnedCaloriesCalculatorActivity extends AppCompatActivity
     //*****************************************************
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
-        // TODO Auto-generated method stub
+        // not used
     }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress,
                                   boolean fromUser) {
-        milesRanTextView.setText(progress + "");
+        milesRanTextView.setText(""+progress);
     }
 
     @Override
@@ -197,22 +222,6 @@ public class BurnedCaloriesCalculatorActivity extends AppCompatActivity
         calculateAndDisplay();
     }
 
-
-    //*****************************************************
-    // Event handler for the Spinner
-    //*****************************************************
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View v, int position,
-                               long id) {
-        feet_spin = position + 1;
-        inches_spin = position + 1;
-        calculateAndDisplay();
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        // Do nothing
-    }
 
     //*****************************************************
     // Event handler for the keyboard and DPad
